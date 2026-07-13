@@ -22,16 +22,12 @@
   {:write-handlers @#'ansatz.export.storage/ansatz-element-write-handlers
    :read-handlers @#'ansatz.export.storage/ansatz-element-read-handlers})
 
-(defn- locals-field [e]
-  (let [f (doto (.getDeclaredField (class e) "locals") (.setAccessible true))]
-    (.get f e)))
-
 (def ^:private thm-tag 2)
 
 (defrecord LiveAnsatzEnv []
   ports/IProofEnv
   (overlay [_]
-    (vec (vals (locals-field (a/env)))))
+    (vec (.allConstants (a/env))))
   (present? [_ decl-name]
     (some? (env/lookup (a/env) (nm/from-string decl-name))))
   (add-decl! [_ decl]

@@ -4,3 +4,4 @@
 .clj-kondo/.cache/
 target/
 local.deps.edn
+.clj-kondo/.cache/
