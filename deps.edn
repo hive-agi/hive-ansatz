@@ -7,19 +7,15 @@
   io.github.hive-agi/hive-addon {:mvn/version "0.2.0"}
 
   ;; Malli registry, derivation, generation, and test-synthesis bridge.
-  io.github.hive-agi/hive-schemas {:mvn/version "0.1.1"}
+  io.github.hive-agi/hive-schemas {:mvn/version "0.1.1"}}
 
-  ;; Decl snapshot codec (Fressian container format).
-  org.clojure/data.fressian {:mvn/version "1.1.0"}}
+ ;; Unpublished deps (io.github.hive-agi/hive-fressian, io.replikativ/ansatz)
+ ;; are supplied by the untracked local.deps.edn:
+ ;;   clj -Sdeps "$(cat local.deps.edn)" ...
+ ;; deps.edn stays :mvn/version-only.
 
  :aliases
- {;; The live-ansatz adapter needs the ansatz kernel on the classpath.
-  ;; Core namespaces never require it — host-neutrality is preserved by
-  ;; loading hive-ansatz.adapters.ansatz only under this alias.
-  :ansatz
-  {:extra-deps {io.replikativ/ansatz {:local/root "../clones-ref/ansatz"}}}
-
-  :test
+ {:test
   {:extra-paths ["test"]
    :extra-deps  {io.github.hive-agi/hive-test {:mvn/version "0.3.1"}
                  org.clojure/test.check {:mvn/version "1.1.1"}}}

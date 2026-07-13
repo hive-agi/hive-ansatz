@@ -23,12 +23,19 @@ kernel environments, packaged as a host-neutral
 | pure | `hive-ansatz.snapshot` | selection + import-plan decisions |
 | pure | `hive-ansatz.recipes` | idioms as data (OCP: new idiom = new entry) |
 | boundary | `hive-ansatz.persistence` | `export!` / `import!` / `inspect` over injected ports (DIP) |
-| adapter | `hive-ansatz.adapters.ansatz` | `LiveAnsatzEnv` + `AnsatzFressianCodec` (only ns touching ansatz classes) |
+| adapter | `hive-ansatz.adapters.ansatz` | `LiveAnsatzEnv` + `AnsatzFressianCodec` (only ns touching ansatz classes; codec delegates to [hive-fressian](../hive-fressian)) |
 | addon | `hive-ansatz.addon` | `IAddon` record; `ansatz_proofs` supertool |
 
-Core namespaces never require ansatz — the adapter loads under the `:ansatz`
-alias (or any classpath that provides ansatz). Without a prover the addon
-initializes degraded with the recipes surface still available.
+Core namespaces never require ansatz or hive-fressian — the adapter loads
+only when both are on the classpath. Without a prover the addon initializes
+degraded with the recipes surface still available.
+
+`deps.edn` is `:mvn/version`-only. Unpublished deps (ansatz, hive-fressian
+pre-publish) are supplied by the untracked `local.deps.edn`:
+
+```bash
+clj -Sdeps "$(cat local.deps.edn)" -M:test ...
+```
 
 ## Usage
 

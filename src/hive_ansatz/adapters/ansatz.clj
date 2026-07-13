@@ -1,25 +1,26 @@
 (ns hive-ansatz.adapters.ansatz
   "Concrete ports for a live replikativ/ansatz environment.
 
-   ONLY this namespace touches ansatz classes — load it under the :ansatz
-   alias (or with ansatz otherwise on the classpath). Core namespaces stay
-   host-neutral.
+   ONLY this namespace touches ansatz classes; it also needs hive-fressian
+   on the classpath (both arrive via local.deps.edn during dev). Core
+   namespaces stay host-neutral.
 
    LiveAnsatzEnv wraps the global a/ansatz-env atom: overlay reads the
    kernel Env's local constant map; add-decl! swaps an immutable
    addConstant result back into the atom; verify delegates to the kernel
-   checker. AnsatzFressianCodec serializes opaque ConstantInfos with
-   ansatz.export.storage's element handlers."
-  (:require [clojure.data.fressian :as fress]
-            [clojure.java.io :as io]
-            [hive-ansatz.ports :as ports]
+   checker. AnsatzFressianCodec registers the ansatz kernel-type handler
+   domain into hive-fressian and speaks its envelope format."
+  (:require [hive-ansatz.ports :as ports]
+            [hive-fressian.codec :as codec]
+            [hive-fressian.registry :as registry]
             [ansatz.core :as a]
             [ansatz.kernel.env :as env]
             [ansatz.kernel.name :as nm]
             [ansatz.export.storage]))
 
-(def ^:private write-handlers @#'ansatz.export.storage/ansatz-element-write-handlers)
-(def ^:private read-handlers @#'ansatz.export.storage/ansatz-element-read-handlers)
+(registry/register! :ansatz/kernel
+  {:write-handlers @#'ansatz.export.storage/ansatz-element-write-handlers
+   :read-handlers @#'ansatz.export.storage/ansatz-element-read-handlers})
 
 (defn- locals-field [e]
   (let [f (doto (.getDeclaredField (class e) "locals") (.setAccessible true))]
@@ -46,26 +47,10 @@
 (defrecord AnsatzFressianCodec []
   ports/IDeclCodec
   (write-decls! [_ path decls]
-    (let [file (io/file path)]
-      (io/make-parents file)
-      (with-open [out (io/output-stream file)]
-        (let [w (fress/create-writer out
-                  :handlers (-> (merge fress/clojure-write-handlers write-handlers)
-                                fress/associative-lookup
-                                fress/inheritance-lookup))]
-          (fress/write-object w {:format :ansatz-decls :version 1})
-          (fress/write-object w (mapv #(str (.name %)) decls))
-          (doseq [ci decls] (fress/write-object w ci))))
-      (count decls)))
+    (:count (codec/write-envelope! path {:format :ansatz-decls} decls)))
   (read-decls [_ path]
-    (with-open [in (io/input-stream (io/file path))]
-      (let [r (fress/create-reader in
-                :handlers (fress/associative-lookup
-                            (merge fress/clojure-read-handlers read-handlers)))
-            header (fress/read-object r)
-            names (fress/read-object r)
-            decls (mapv (fn [_] (fress/read-object r)) names)]
-        {:header header :decls decls}))))
+    (let [{:keys [header items]} (codec/read-envelope path)]
+      {:header header :decls items})))
 
 (defn live-env [] (->LiveAnsatzEnv))
 (defn fressian-codec [] (->AnsatzFressianCodec))
