@@ -1,0 +1,10 @@
+{:addon/id           "hive.ansatz"
+ :addon/kind         :addon
+ :addon/type         :native
+ :addon/version      "0.1.0"
+ :addon/init-ns      "hive-ansatz.addon"
+ :addon/init-fn      "init-as-addon!"
+ :addon/config       {}
+ :addon/capabilities #{:tools :health-reporting :ansatz/proof-persistence}
+ :addon/dependencies #{}
+ :addon/description  "Prover-agnostic proof persistence (export/import/verify kernel decl snapshots) and proving idioms as data."}
