@@ -3,7 +3,7 @@
  :addon/type         :native
  :addon/version      "0.1.0"
  :addon/init-ns      "hive-ansatz.addon"
- :addon/init-fn      "init-as-addon!"
+ :addon/init-fn      "addon-ctor"
  :addon/config       {}
  :addon/capabilities #{:tools :health-reporting :ansatz/proof-persistence}
  :addon/dependencies #{}
