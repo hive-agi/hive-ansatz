@@ -32,3 +32,10 @@
     "Write decls to `path`. Returns the number written.")
   (read-decls [this path]
     "Read decls from `path`. Returns {:header map :decls [decl ...]}."))
+
+(defprotocol IProofSource
+  "A source that turns a specification into a candidate proof (DIP swap point
+   for proof PROVENANCE — e.g. a Kimina-Prover front)."
+  (propose [this spec]
+    "Given `spec` (an NL string or a malli-derived goal), return a candidate
+     proof artifact (opaque: a Lean term or ansatz-ingestable decl), or nil."))
