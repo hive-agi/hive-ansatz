@@ -20,10 +20,28 @@
     "Run `probe` against `artifact`; return a CheckResult."))
 
 (def target-profiles
-  "DIP swap point: compile-target behaviour as data, keyed by target."
-  {:jvm   {:target :jvm   :dialect-key :clj  :opacity :none        :oracle? true  :artifact :classes               :gates #{}}
-   :cljw  {:target :cljw  :dialect-key :clj  :opacity :bytecode    :oracle? false :artifact :self-contained-binary :gates #{}}
-   :cljrs {:target :cljrs :dialect-key :rust :opacity :native-code :oracle? false :artifact :native-lib            :gates #{:zero-interpreted-fallback}}})
+  "DIP swap point: compile-target behaviour as data, keyed by target.
+
+   Every build detail a target needs — how probes reach it, whether its unit
+   carries an `ns` form, which binary compiles it, the argv template, and the
+   flags each gate lowers to — rides here, so the driver stays one generic
+   function and a further target is a data entry (OCP)."
+  {:jvm   {:target :jvm   :dialect-key :clj  :opacity :none        :oracle? true  :artifact :classes               :gates #{}
+           :runner :in-process
+           :unit-ns-form? true}
+   :cljw  {:target :cljw  :dialect-key :clj  :opacity :bytecode    :oracle? false :artifact :self-contained-binary :gates #{}
+           :runner :binary
+           :unit-ns-form? true
+           :bin {:env "HIVE_ANSATZ_CLJW_BIN"
+                 :default "~/PP/hive/clones-ref/ClojureWasm/zig-out/bin/cljw"}
+           :build-args ["build" "-m" :kernel/ns "-o" :artifact/out :kernel/file]}
+   :cljrs {:target :cljrs :dialect-key :rust :opacity :native-code :oracle? false :artifact :native-lib            :gates #{:zero-interpreted-fallback}
+           :runner :binary
+           :unit-ns-form? false
+           :bin {:env "HIVE_ANSATZ_CLJRS_BIN"
+                 :default "~/PP/hive/clones-ref/clojurust/target/debug/cljrs"}
+           :build-args ["compile" "-o" :artifact/out :kernel/file]
+           :gate-args {:zero-interpreted-fallback ["--require-fully-compiled"]}}})
 
 (defn profile
   "The CompileTarget profile registered for `k`, or nil."

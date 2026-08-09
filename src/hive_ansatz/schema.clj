@@ -65,14 +65,32 @@
 
 (def CompileTarget
   "One ICompileTarget provider as DATA; the registry of these is the DIP swap
-   point, and a new target is a data entry (OCP), not a new protocol impl."
+   point, and a new target is a data entry (OCP), not a new protocol impl.
+
+   The build keys are OPTIONAL: a target may be declared as data before it can
+   be built or run. `hive-ansatz.compile.driver` refuses a target that lacks
+   the key it needs, rather than guessing one.
+
+   :runner        how probes reach the kernel — :in-process eval, or a built
+                  :binary artifact executed with the probe index as argv.
+   :unit-ns-form? whether the emitted unit opens with an `ns` form.
+   :bin           where to find the compiler: an env var and a fallback path.
+   :build-args    argv template; keywords are placeholders resolved per build.
+   :gate-args     gate keyword -> the compiler flags that enforce it."
   [:map {:closed true}
    [:target CompileTargetKey]
    [:dialect-key :keyword]
    [:opacity Opacity]
    [:oracle? :boolean]
    [:artifact :keyword]
-   [:gates [:set :keyword]]])
+   [:gates [:set :keyword]]
+   [:runner {:optional true} [:enum :in-process :binary]]
+   [:unit-ns-form? {:optional true} :boolean]
+   [:bin {:optional true} [:map {:closed true}
+                           [:env :string]
+                           [:default :string]]]
+   [:build-args {:optional true} [:vector [:or :string :keyword]]]
+   [:gate-args {:optional true} [:map-of :keyword [:vector :string]]]])
 
 ;; ── Differential oracle (proof-level P8 and value-level P5/P6) ───────────────
 
@@ -115,6 +133,27 @@
    [:targets [:vector CompileTargetKey]]
    [:opacity Opacity]
    [:spec {:optional true} :string]])
+
+(def Kernel
+  "A lowered proof-carrying kernel, ready to compile.
+
+   :source is dialect-portable Clojure defining the kernel; :probes are the
+   expressions baked into the artifact AT COMPILE TIME, addressed downstream by
+   their index in this vector."
+  [:map {:closed true}
+   [:manifest {:optional true} KernelManifest]
+   [:ns :string]
+   [:source :string]
+   [:probes [:vector :string]]])
+
+(def KernelArtifact
+  "Handle on a compiled kernel: the artifact path for a :binary runner, the
+   loaded namespace name for :in-process. :probes mirrors the Kernel's, and an
+   arm may only be asked for a probe this vector carries."
+  [:map {:closed true}
+   [:target CompileTargetKey]
+   [:handle :string]
+   [:probes [:vector :string]]])
 
 (def LeanToolchainPin
   "Versions a Lean IProofEnv speaks, carried on differential results so the
