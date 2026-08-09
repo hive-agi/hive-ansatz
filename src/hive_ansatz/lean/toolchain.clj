@@ -8,13 +8,14 @@
             [hive-ansatz.schema :as schema]))
 
 (def min-disk-gb
-  "Provisional free-disk floor for a Lean+mathlib4 build (GB); pending
-   empirical grounding."
-  12)
+  "Free-disk floor (GB) for a Lean+mathlib4 install to be affordable.
+   Grounded on a measured working install, not estimated."
+  8)
 
 (def min-ram-gb
-  "Provisional free-RAM floor for a Lean REPL warm-boot (GB); pending
-   empirical grounding."
+  "Free-RAM floor (GB) for warm-booting a Lean REPL over mathlib4.
+   STILL PROVISIONAL: unlike the disk floor this one has not been measured —
+   it needs a REPL that has imported Mathlib, on an idle machine."
   6)
 
 (defn boot-decision
