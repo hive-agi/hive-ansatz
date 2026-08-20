@@ -33,7 +33,7 @@
            :runner :binary
            :unit-ns-form? true
            :bin {:env "HIVE_ANSATZ_CLJW_BIN"
-                 :default "~/PP/hive/clones-ref/ClojureWasm/zig-out/bin/cljw"}
+                 :default "~/PP/ClojureWasm/zig-out/bin/cljw"}
            :build-args ["build" "-m" :kernel/ns "-o" :artifact/out :kernel/file]}
    :cljrs {:target :cljrs :dialect-key :rust :opacity :native-code :oracle? false :artifact :native-lib            :gates #{:zero-interpreted-fallback}
            :runner :binary
