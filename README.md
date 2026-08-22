@@ -1,5 +1,14 @@
 # hive-ansatz
 
+<!-- hive-badges -->
+
+[![Clojars Project](https://img.shields.io/clojars/v/io.github.hive-agi/hive-ansatz.svg)](https://clojars.org/io.github.hive-agi/hive-ansatz)
+[![cljdoc](https://cljdoc.org/badge/io.github.hive-agi/hive-ansatz)](https://cljdoc.org/d/io.github.hive-agi/hive-ansatz/CURRENT)
+[![release](https://github.com/hive-agi/hive-ansatz/actions/workflows/release.yml/badge.svg)](https://github.com/hive-agi/hive-ansatz/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+<!-- /hive-badges -->
+
 Prover-agnostic proof persistence for [ansatz](https://github.com/replikativ/ansatz)-style
 kernel environments, packaged as a host-neutral
 [hive-addon](https://github.com/hive-agi/hive-addon) (`IAddon` 0.2.0).
