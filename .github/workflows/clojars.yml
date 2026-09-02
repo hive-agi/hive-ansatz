@@ -25,6 +25,12 @@ jobs:
           path: ~/.m2
           key: m2-${{ hashFiles('deps.edn') }}
           restore-keys: m2-
+      # A published pom is immutable, so the suite runs BEFORE the deploy.
+      # Without this step a red push straight to main ships an artifact under
+      # a version number that can never be replaced.
+      - name: Run tests
+        run: clojure -M:test
+
       - name: Deploy to Clojars
         env:
           CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
