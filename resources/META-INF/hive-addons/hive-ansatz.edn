@@ -7,4 +7,6 @@
  :addon/config       {}
  :addon/capabilities #{:tools :health-reporting :ansatz/proof-persistence}
  :addon/dependencies #{}
- :addon/description  "Prover-agnostic proof persistence (export/import/verify kernel decl snapshots) and proving idioms as data."}
+ :addon/description  "Prover-agnostic proof persistence (export/import/verify kernel decl snapshots) and proving idioms as data."
+ :addon/maturity :beta
+ :addon/trust-class :foss}
