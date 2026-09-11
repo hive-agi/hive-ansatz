@@ -39,3 +39,12 @@
   (propose [this spec]
     "Given `spec` (an NL string or a malli-derived goal), return a candidate
      proof artifact (opaque: a Lean term or ansatz-ingestable decl), or nil."))
+
+(defprotocol IProver
+  "Kernel surface a lifted foreign function is defined and proven through."
+  (define! [this forms]
+    "Evaluate the kernel `forms` that define a function, in order. Returns
+     nil, or {:error message} when a form does not elaborate.")
+  (prove! [this theorem params prop tactics]
+    "nil when the kernel accepts a proof of `prop` under `params` via
+     `tactics`, installing `theorem`; else the rejection message."))

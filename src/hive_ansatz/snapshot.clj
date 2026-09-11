@@ -6,10 +6,13 @@
             [hive-ansatz.schema :as schema]))
 
 (defn select
-  "Filter `metas` by `spec` (drop :exclude names) and sort by :name."
+  "Filter `metas` by `spec` (keep only :include names when given, drop
+   :exclude names) and sort by :name."
   [metas spec]
-  (let [exclude (or (:exclude spec) #{})]
+  (let [include (:include spec)
+        exclude (or (:exclude spec) #{})]
     (->> metas
+         (filter (fn [{:keys [name]}] (or (nil? include) (contains? include name))))
          (remove (fn [{:keys [name]}] (contains? exclude name)))
          (sort-by :name)
          vec)))

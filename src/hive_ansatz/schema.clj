@@ -17,8 +17,10 @@
    [:theorem? :boolean]])
 
 (def SnapshotSpec
-  "Selection spec for an export: which overlay decls to snapshot."
+  "Selection spec for an export: which overlay decls to snapshot. `:include`
+   given keeps only those names; `:exclude` drops names from whatever is kept."
   [:map
+   [:include {:optional true} [:set :string]]
    [:exclude {:optional true} [:set :string]]])
 
 (def ImportPlan
@@ -43,6 +45,64 @@
    [:skipped [:vector DeclName]]
    [:all-verified :boolean]
    [:results VerifyResults]])
+
+;; ── A lifted foreign function, proven and persisted ─────────────────────────
+
+(def Lift
+  "What a language tier's `lift` answered for one foreign declaration, as the
+   prover consumes it: the kernel forms and the name they define. Open: a
+   richer answer (contract, params, body) validates untouched."
+  [:map
+   [:name :symbol]
+   [:forms [:vector :any]]])
+
+(def Property
+  "One behavioural property of a lifted function, in the ansatz surface's own
+   data forms: the theorem name, its typed params, the Prop and the tactics."
+  [:map {:closed true}
+   [:theorem :symbol]
+   [:params [:vector :any]]
+   [:prop :any]
+   [:tactics [:vector :any]]])
+
+(def Obligation
+  "A law id the caller wants discharged, and the property whose kernel proof
+   discharges it."
+  [:map {:closed true}
+   [:law-id :qualified-keyword]
+   [:property Property]])
+
+(def ContentAddress
+  "sha256 over a stored artifact's bytes, spelled `sha256:<64 hex>`."
+  [:re {:gen/schema [:vector {:min 64 :max 64}
+                     [:enum "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f"]]
+        :gen/fmap   (fn [digits] (str "sha256:" (apply str digits)))}
+   #"^sha256:[0-9a-f]{64}$"])
+
+(def ArtifactRef
+  "Where a stored proof artifact lives and what it discharges: the closed
+   shape a certificate index consumes."
+  [:map {:closed true}
+   [:law-id :qualified-keyword]
+   [:theorem :symbol]
+   [:artifact ContentAddress]
+   [:prover [:enum :ansatz]]])
+
+(def LiftReason
+  "Why a lift was not proven."
+  [:enum :define-failed :kernel-rejected])
+
+(def LiftReport
+  "Outcome of proving a lift against an obligation. `:proven?` false always
+   carries at least one reason; true carries the artifact and the decl names
+   it holds."
+  [:map {:closed true}
+   [:proven? :boolean]
+   [:reasons [:vector LiftReason]]
+   [:details {:optional true} [:map-of :keyword :any]]
+   [:artifact-ref {:optional true} ArtifactRef]
+   [:path {:optional true} :string]
+   [:names {:optional true} [:vector DeclName]]])
 
 (def Idiom
   "One proving strategy/idiom as data (see hive-ansatz.recipes)."
