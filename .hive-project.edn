@@ -1,0 +1,6 @@
+{:project-id "hive-ansatz"
+ :parent "hive"
+ :description "Prover-agnostic proof persistence for ansatz-style kernel environments, packaged as a host-neutral hive-addon. Exports a live prover envs local overlay to a durable snapshot and re-verifies every theorem through the kernel on import."
+ :language :clojure
+ :tags ["addon" "proof" "ansatz" "verification" "snapshot"]
+ :carto {:source-roots ["dev" "resources" "src" "test"]}}
