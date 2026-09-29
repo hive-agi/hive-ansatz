@@ -5,7 +5,16 @@
    deciders over flat `List Nat` encodings; the prop builders state
    `(= Bool <decider applied to literals> <expected>)`, which the kernel closes
    by `rfl` exactly when the decider reduces to the expected value. Nothing
-   here touches a kernel: an IProver evaluates the forms (DIP)."
+   here touches a kernel: an IProver evaluates the forms (DIP).
+
+   Nested lists (upstream ansatz defect, <= 0.2.79): a surface `match` over
+   `(List (List Nat))` fails with 'Type mismatch in application of List.rec',
+   because ansatz.surface.match counts the `head : List Nat` field as
+   recursive (head-constant comparison) and adds a second IH. The encodings
+   here stay flat (mixed-radix codes). When a nested list is unavoidable,
+   eliminate with the recursor directly, which elaborates and reduces:
+     (List.rec 0 (fn [hd :- (List Nat) tl :- (List (List Nat)) ih :- Nat] ...) rows)
+   Pinned by hive-ansatz.assay.nested-list-test."
   (:require [malli.core :as m]))
 
 (def prefix
