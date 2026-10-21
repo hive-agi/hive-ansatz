@@ -110,3 +110,12 @@
   "Manifest entry point: build the addon record (uninitialized)."
   ([] (init-as-addon! {}))
   ([seed] (->HiveAnsatzAddon (atom nil) seed)))
+
+(defn addon-ctor
+  "Pure constructor - (config -> IAddon). Builds the uninitialized
+   HiveAnsatzAddon record; performs NO registration and NO initialize! call.
+   The mounter (hive-addon.mount) resolves this via :addon/init-fn and itself
+   drives register!/initialize!. Additive: the self-registering `init-as-addon!`
+   path remains for the current hive-mcp loader."
+  [_config]
+  (->HiveAnsatzAddon (atom nil) {}))

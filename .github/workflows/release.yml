@@ -1,64 +1,68 @@
-name: Release
-# Reads VERSION, tags v{VERSION}, and cuts a GitHub release.
+name: release
+
+# Patch-bump and publish only when the push actually changes the library.
+# README / CI / test-only commits do not mint a version, because a published
+# pom is immutable on both Clojars and the private registry.
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'resources/**'
+      - 'deps.edn'
+      # version.edn decides what the jar carries (:src-dirs, :publish),
+      # and VERSION is the release floor: both must be able to release.
+      - 'version.edn'
+      - 'VERSION'
   workflow_dispatch:
 
-permissions:
-  contents: write
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
-    name: Tag & Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Read version
-        id: version
-        run: |
-          if [ -f VERSION ]; then
-            VERSION=$(cat VERSION | tr -d '[:space:]')
-          else
-            echo "::error::VERSION file not found"
-            exit 1
-          fi
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Check if tag exists
-        id: check_tag
-        run: |
-          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create tag
-        if: steps.check_tag.outputs.exists == 'false'
-        run: |
-          git tag "${{ steps.version.outputs.tag }}"
-          git push origin "${{ steps.version.outputs.tag }}"
-
-      - name: Check if release exists
-        id: check_release
-        run: |
-          if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Create GitHub release
-        if: steps.check_release.outputs.exists == 'false'
-        uses: softprops/action-gh-release@v2
+      - uses: DeLaGuardo/setup-clojure@13.0
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          generate_release_notes: true
+          cli: latest
+
+      # The release number comes from the tags, not from a commit back to main.
+      # VERSION in the tree is a FLOOR (raise it in a staging PR to open a new
+      # minor line); this run releases patch+1 of max(VERSION, newest v* tag).
+      - name: Resolve release base from tags
+        run: |
+          set -euo pipefail
+          FLOOR=$(tr -d '[:space:]' < VERSION)
+          LAST=$(git tag -l 'v[0-9]*' --sort=-v:refname | head -n1 | sed 's/^v//')
+          BASE=$(printf '%s\n%s\n' "$FLOOR" "${LAST:-$FLOOR}" | sort -V | tail -n1)
+          echo "VERSION floor $FLOOR, newest tag ${LAST:-none}: base $BASE"
+          printf '%s\n' "$BASE" > VERSION
+
+      - name: Bump patch version
+        run: clojure -T:build bump :level :patch
+
+      - name: Tag
+        run: |
+          set -euo pipefail
+          VER=$(tr -d '[:space:]' < VERSION)
+          git config user.name  "hive-ci"
+          git config user.email "ci@hive-agi.local"
+          # Tag only, no commit: a version-bump commit on main is one staging
+          # lacks, and it made every next staging->main PR conflict in VERSION.
+          # Annotated, so the next run's tag scan and `git describe` see it.
+          git tag -a "v$VER" -m "release $VER"
+          git push origin "refs/tags/v$VER"
+
+      - name: Deploy
+        env:
+          CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
+          CLOJARS_PASSWORD: ${{ secrets.CLOJARS_DEPLOY_TOKEN }}
+        run: clojure -T:build deploy

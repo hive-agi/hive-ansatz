@@ -52,3 +52,57 @@
    [:rule :string]
    [:fix {:optional true} :string]
    [:tags [:set :keyword]]])
+
+;; ---------------------------------------------------------------------------
+;; Assay certificates (hive-assay values consumed as plain data)
+;; ---------------------------------------------------------------------------
+
+(def AssayArm
+  "An assay arm as plain data: the hive-assay :arm/* keys this context reads."
+  [:map
+   [:arm/id [:and :string [:fn {:error/message "non-blank"} (fn [s] (pos? (count s)))]]]
+   [:arm/levels [:map-of :any :any]]])
+
+(def AssayDesign
+  "An assay experiment's structural part: declared factors and the arms."
+  [:map
+   [:experiment/factors [:map-of :any [:sequential :any]]]
+   [:experiment/arms [:sequential AssayArm]]])
+
+(def LevelRef
+  "[factor-key level] naming one declared level."
+  [:tuple :any :any])
+
+(def Invariant
+  "A declared structural invariant a promoted arm must satisfy.
+   :levels-declared  every factor set to a declared level
+   :implies          arm at level :if  => arm at level :then
+   :excludes         arm at level :if  => arm NOT at level :then
+   :within-budget    differs from the incumbent in at most :k factors"
+  [:multi {:dispatch :invariant/kind}
+   [:levels-declared [:map [:invariant/kind [:= :levels-declared]]]]
+   [:implies [:map [:invariant/kind [:= :implies]]
+              [:invariant/if LevelRef] [:invariant/then LevelRef]]]
+   [:excludes [:map [:invariant/kind [:= :excludes]]
+               [:invariant/if LevelRef] [:invariant/then LevelRef]]]
+   [:within-budget [:map [:invariant/kind [:= :within-budget]]
+                    [:invariant/k nat-int?]]]])
+
+(def CertificateTier
+  "Evidence rung, strongest first. :proof — the ansatz kernel checked a
+   proof term of the claim's decider equation; :computed — the host decided
+   the claim exhaustively over the finite data (no kernel); :property — the
+   claim was sampled (holds on every sample, not on all inputs)."
+  [:enum :proof :computed :property])
+
+(def Certificate
+  "A STRUCTURAL certificate. It never ranks arms: whether an arm is better
+   is a statistical claim that belongs to hive-assay."
+  [:map {:closed true}
+   [:certificate/claim [:enum :assay/balanced-design :assay/prompt-arm-independent
+                        :assay/arm-invariants]]
+   [:certificate/holds? :boolean]
+   [:certificate/tier CertificateTier]
+   [:certificate/subject :map]
+   [:certificate/evidence [:vector :map]]
+   [:certificate/degraded {:optional true} [:map-of :keyword :any]]])

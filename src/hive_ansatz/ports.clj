@@ -32,3 +32,12 @@
     "Write decls to `path`. Returns the number written.")
   (read-decls [this path]
     "Read decls from `path`. Returns {:header map :decls [decl ...]}."))
+
+(defprotocol IProver
+  "Kernel surface a lifted foreign function is defined and proven through."
+  (define! [this forms]
+    "Evaluate the kernel `forms` that define a function, in order. Returns
+     nil, or {:error message} when a form does not elaborate.")
+  (prove! [this theorem params prop tactics]
+    "nil when the kernel accepts a proof of `prop` under `params` via
+     `tactics`, installing `theorem`; else the rejection message."))
