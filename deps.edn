@@ -4,7 +4,7 @@
 
   ;; Host-neutral addon contract. hive-ansatz implements IAddon directly;
   ;; concrete hosts remain outside this dependency graph.
-  io.github.hive-agi/hive-addon {:mvn/version "1.1.8"}
+  io.github.hive-agi/hive-addon {:mvn/version "1.1.10"}
 
   ;; Malli registry, derivation, generation, and test-synthesis bridge.
   io.github.hive-agi/hive-schemas {:mvn/version "0.1.40"}}
